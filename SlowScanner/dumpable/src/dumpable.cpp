@@ -2,15 +2,17 @@
 
 m_file::m_file(const std::string& name) : _filename(name)
 {
-    _file_handle = CreateFileA(
-        _filename.c_str(),
-        GENERIC_READ | GENERIC_WRITE,
-        FILE_SHARE_READ | FILE_SHARE_WRITE,
-        nullptr,
-        OPEN_ALWAYS,
-        FILE_ATTRIBUTE_NORMAL,
-        nullptr
-    );
+    ::DeleteFileA(_filename.c_str());
+
+     _file_handle = CreateFileA(
+         _filename.c_str(),
+         GENERIC_READ | GENERIC_WRITE,
+         FILE_SHARE_READ | FILE_SHARE_WRITE,
+         nullptr,
+         OPEN_ALWAYS,
+         FILE_ATTRIBUTE_NORMAL,
+         nullptr
+     );
 
     if (_file_handle == INVALID_HANDLE_VALUE) {
         _valid=false;

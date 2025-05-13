@@ -10,105 +10,101 @@
 #include "memory_region.hpp"
 
 enum scan_type {
-    unknown_value,
-    increased_value,
-    decreased_value,
-    exact_value,
-    increased_by,
-    decreased_by,
-    smaller_than,
-    bigger_than,
-    changed,
-    unchanged,
-    value_between
+	unknown_value,
+	increased_value,
+	decreased_value,
+	exact_value,
+	increased_by,
+	decreased_by,
+	smaller_than,
+	bigger_than,
+	changed,
+	unchanged,
+	value_between
 };
 
 
-template<typename data_type>
 struct scan_entry {
-    data_type value;
-    size_t element_index;
+	uint64_t value;
+	uint64_t snapshot_value;
+	size_t   element_index;
 };
 
 
 //Tips: you can make this class dumpable to save memory space (I don't need that for now)
 
-template<typename data_type>
 class scan {
-    std::vector<scan_entry<data_type>> _results;
-    std::shared_ptr<memory_region> _associated_region;
-
-    scan_type _type;
-    bool _valid_scan{ false };
+	std::shared_ptr<memory_region> _region;
+	scan_type                      _type;
+	size_t                         _elem_size;
+	bool                           _valid{ false };
+	std::vector<scan_entry>        _results;
 
 public:
-    scan(const std::shared_ptr<memory_region>& region, scan_type type) : _associated_region(region), _type(type) {}
+	using comparator_fn = std::function<bool(uint64_t, uint64_t, std::optional<uint64_t>)>;
+public:
+	scan(std::shared_ptr<memory_region> region,
+		scan_type type,
+		size_t elem_size)
+		: _region(std::move(region))
+		, _type(type)
+		, _elem_size(elem_size)
+	{
+		if (!(elem_size == 1 || elem_size == 2 || elem_size == 4 || elem_size == 8)) {
+			throw std::invalid_argument("element_size must be 1,2,4 or 8");
+		}
+	}
 
-    scan(const scan& other) = delete;
-    scan& operator=(const scan& other) = delete;
+	scan(const scan&) = delete;
+	scan& operator=(const scan&) = delete;
+	scan(scan&&) noexcept = default;
+	scan& operator=(scan&&) noexcept = default;
 
-    // Move constructor
-    scan(scan&& other) noexcept
-        : _results(std::move(other._results)),
-        _associated_region(std::move(other._associated_region)),
-        _type(other._type) // assuming scan_type is trivially copyable
-    {
-        // Optionally reset other's _type if needed (e.g., other._type = scan_type::none;)
-    }
+	inline scan_type type() { return _type; }
 
-    // Move assignment operator
-    scan& operator=(scan&& other) noexcept
-    {
-        if (this != &other)
-        {
-            _results = std::move(other._results);
-            _associated_region = std::move(other._associated_region);
-            _type = other._type;
-        }
-        return *this;
-    }
+	void set_valid() { _valid = true; }
 
-    std::shared_ptr<memory_region> region() { return _associated_region; }
+	bool is_valid() const { return _valid; }
+	scan_type type() const { return _type; }
+	size_t element_size() const { return _elem_size; }
+	const std::vector<scan_entry>& results() const { return _results; }
+	std::shared_ptr<memory_region> region() const { return _region; }
 
-    inline scan_type type() { return _type; }
 
-    inline std::span<scan_entry<data_type>> elements() {
-        return this->_results;
-    
-    }
+	__forceinline uint64_t search_value(const comparator_fn& cmp,
+		uint64_t ref1_bits,
+		std::optional<uint64_t> ref2_bits = std::nullopt)
+	{
+		_results.clear();
+		if (!_region) return 0;
 
-    uint64_t search_value(std::function<bool(data_type, data_type, std::optional<data_type>)> comparator, const data_type& value1, std::optional<data_type> value2);
+		auto span = _region->elements_by_size(_elem_size);
+		uint64_t count = 0;
 
-    void add_element(const scan_entry<data_type>& elem);
-    void set_valid() { _valid_scan = true; }
-    bool is_valid_result() { return _valid_scan; }
+		for (size_t i = 0; i < span.size(); ++i) {
+			uint64_t v = 0;
+			std::memcpy(&v, span[i], _elem_size);
+			if (cmp(v, ref1_bits, ref2_bits)) {
+				_results.push_back({ v, v, i });
+				++count;
+			}
+		}
+		_valid = (count > 0);
+		return count;
+	}
+
+	__forceinline void add_result(const scan_entry& e) {
+		_results.push_back(e);
+	}
+
+	void update() {
+		if (_region && !_results.empty()) {
+			_region->read_memory();
+
+			for (auto& e : _results)
+				std::memcpy(&e.value, _region->elements_by_size(_elem_size)[e.element_index], _elem_size);
+
+		}
+	}
 };
-
-template<typename data_type>
-inline uint64_t scan<data_type>::search_value(std::function<bool(data_type, data_type, std::optional<data_type>)> comparator, const data_type& value1, std::optional<data_type> value2)
-{
-    auto total_elements{ 0 };
-    if (!_associated_region)
-        return total_elements;
-
-    auto elements = _associated_region->elements<data_type>();
-
-    size_t index = 0;
-
-    for (const auto& elem : elements) {
-        if (comparator(elem, value1, value2)) {
-            _results.push_back({ elem, index });
-            ++total_elements;
-        }
-        ++index;
-    }
-
-    return total_elements;
-}
-
-template<typename data_type>
-inline void scan<data_type>::add_element(const scan_entry<data_type>& elem)
-{
-    _results.push_back(elem);
-}
 

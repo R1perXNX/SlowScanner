@@ -1,21 +1,23 @@
 #include "memory_region.hpp"
+#include "../slow_scanner.h"
 
-int memory_region::read_memory(long pid, size_t& bytes_read)
+int memory_region::read_memory()
 {
-    if (alloc_f(size()) == -1)
-        return 0;
+	if (!_mem_reserved) {
+		if (alloc_f(size()) == -1)
+			return 0;
+		else
+			_mem_reserved = true;
 
-    BOOL ok = ReadProcessMemory(
-        LongToHandle(pid),
-        base(),
-        _data[0].data(),
-        size(),
-        &bytes_read
-    );
+	}
+	SIZE_T bytes_read = 0;
+	BOOL success = ReadProcessMemory(
+		process_handle,
+		base(),
+		_data[0].data(),
+		size(),
+		&bytes_read
+	);
 
-    if (ok) {
-        _has_data = true;
-        return 1;
-    }
-    return 0;
+	return success;
 }

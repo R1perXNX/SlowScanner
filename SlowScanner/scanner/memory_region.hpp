@@ -1,37 +1,50 @@
 #pragma once
 #include "../dumpable/dumpable.hpp"
 
-
 class memory_region : public dumpable<uint8_t> {
 private:
-    bool _has_data{ false };
-    MEMORY_BASIC_INFORMATION _mbi;
-  
+	MEMORY_BASIC_INFORMATION _mbi;
+	bool _mem_reserved{ false };
 
 public:
-    memory_region(const std::shared_ptr<m_file>& file, const MEMORY_BASIC_INFORMATION& mbi): dumpable<uint8_t>(file), _mbi(mbi) {}
-    ~memory_region() override = default;
 
-    inline void* base() { return _mbi.BaseAddress; }
-    inline size_t size() { return _mbi.RegionSize; }
+	memory_region(const std::shared_ptr<m_file>& file, MEMORY_BASIC_INFORMATION& mbi) : dumpable<uint8_t>(file), _mbi(mbi) {}
+	~memory_region() override = default;
 
-    inline bool has_protection_flags(DWORD protect_flags) { return (_mbi.Protect & protect_flags) != 0;}
-    inline bool is_commited() { return _mbi.State == MEM_COMMIT;}
-    inline bool is_memmapped() { return _mbi.Type == MEM_MAPPED; }
+	inline void* base() { return _mbi.BaseAddress; }
+	inline size_t size() { return _mbi.RegionSize; }
 
-    //Supposed to be called once per object, does not handle multiple file chunks
-    int read_memory(long pid, size_t& bytes_read);
+	inline bool has_protection_flags(DWORD protect_flags) { return (_mbi.Protect & protect_flags) != 0; }
+	inline bool is_commited() { return _mbi.State == MEM_COMMIT; }
+	inline bool is_memmapped() { return _mbi.Type == MEM_MAPPED; }
 
-    template <typename data_type>
-    std::span<data_type> elements();
+	//Supposed to be called once per object, does not handle multiple file chunks
+	int read_memory();
+
+
+	inline std::span<uint8_t> raw_bytes() const {
+		if (_data.empty()) return {};
+		return { _data[0].data(), _data[0].size() };
+	}
+
+	class strided_span {
+	public:
+		strided_span(const uint8_t* ptr, size_t total_bytes, size_t stride)
+			: _ptr(ptr), _count(total_bytes / stride), _stride(stride) {
+		}
+
+		size_t size() const { return _count; }
+		const uint8_t* operator[](size_t i) const { return _ptr + i * _stride; }
+
+	private:
+		const uint8_t* _ptr;
+		size_t         _count;
+		size_t         _stride;
+	};
+
+	strided_span elements_by_size(size_t elem_size) const {
+		auto raw = raw_bytes();
+		return { raw.data(), raw.size(), elem_size };
+	}
 
 };
-
-template<typename data_type>
-std::span<data_type> memory_region::elements()
-{
-    if (!_has_data)
-        return std::span<data_type>();
-
-    return std::span<data_type>(reinterpret_cast<data_type*>(_data[0].data()), _data[0].size() / sizeof(data_type));
-}

@@ -130,14 +130,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dumpable\src\dumpable.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="scanner\memory_region.cpp" />
-    <ClCompile Include="SlowScanner.cpp" />
+    <ClCompile Include="src\slow_scanner.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dumpable\dumpable.hpp" />
     <ClInclude Include="mio.hpp" />
     <ClInclude Include="scanner\memory_region.hpp" />
     <ClInclude Include="scanner\scan.hpp" />
+    <ClInclude Include="singleton.hpp" />
+    <ClInclude Include="slow_scanner.h" />
     <ClInclude Include="thread_pool.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
