@@ -4,8 +4,10 @@ The **SlowScanner Library** is a lightweight and flexible memory scanning libary
 
 ## UI Support
 
-Use the ImGui-powered user interface is available with GHScanner Project on [GuidedHacking](https://guidedhacking.com). This project is protected by copyright and cannot be publicly distributed.
+Use the ImGui-powered user interface is available with GHScanner project on [GuidedHacking](https://guidedhacking.com). This project is protected by copyright and cannot be publicly distributed.
 
 <p align="center">
   <img src="GHScanner.png" alt="Half-size Image" width="70%">
 </p>
+
+## Current Features
