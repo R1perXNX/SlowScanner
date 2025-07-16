@@ -7,5 +7,5 @@ The **SlowScanner Library** is a lightweight and flexible memory scanning libary
 Use the ImGui-powered user interface is available on [GuidedHacking](https://guidedhacking.com)
 
 <p align="center">
-  <img src="GHScanner.png" alt="Half-size Image" width="50%">
+  <img src="GHScanner.png" alt="Half-size Image" width="70%">
 </p>
