@@ -1,6 +1,6 @@
 # Memory Scanner Library
 
-The **SlowScanner Library** is a lightweight and flexible memory scanning libary designed to work with custom drivers. It allows you to read and write virtual memory without being blocked by anti-cheats. It doesn't come with an user interface so you have to create your own or
+The **SlowScanner Library** is a lightweight and flexible memory scanning libary. It allows you to read and write virtual memory using Windows API or Kernel drivers to avoid anti-cheat detections. It doesn't come with an user interface so you have to create your own or
 
 ## UI Support
 
