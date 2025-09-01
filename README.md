@@ -1,7 +1,6 @@
 # Memory Scanner Library
 
-The **SlowScanner Library** is a lightweight and flexible memory scanning libary. It allows you to read and write virtual memory using Windows API or Kernel drivers to avoid anti-cheat detections. It doesn't come with an user interface so you have to create your own or
-
+The **SlowScanner Library** is a lightweight and flexible memory scanning libary. It allows you to read and write virtual memory using Windows API or Kernel drivers to avoid anti-cheat detections.
 ## UI Support
 
 Use the ImGui-powered user interface  available with GHScanner project. GHScanner is protected by copyright and cannot be publicly distributed. The project as well the documentation of SlowScanner is avaiable at  [GuidedHacking](https://guidedhacking.com).
